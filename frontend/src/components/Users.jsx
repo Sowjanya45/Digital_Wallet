@@ -26,7 +26,7 @@ export const Users = () => {
             }} type="text" placeholder="Search users..." className="w-full px-2 py-1 border rounded border-slate-200"></input>
         </div>
         <div>
-            {users.map(user => <User user={user} />)}
+            {users.map(user => <User key={user._id} user={user} />)}
         </div>
     </>
 }
@@ -49,8 +49,8 @@ function User({user}) {
         </div>
 
         <div className="flex flex-col justify-center h-ful">
-            <Button onClick={(e) => {
-                navigate("/send?id=" + user._id + "&name=" + user.firstName);
+            <Button onClick={() => {
+                navigate("/send?id=" + user._id + "&name=" + encodeURIComponent(user.firstName));
             }} label={"Send Money"} />
         </div>
     </div>

@@ -6,16 +6,16 @@ const zod = require("zod");
 const { User, Account } = require("../db");
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../config");
-const  { authMiddleware } = require("../middleware");
+const { authMiddleware, asyncHandler } = require("../middleware");
 
 const signupBody = zod.object({
     username: zod.string().email(),
-	firstName: zod.string(),
-	lastName: zod.string(),
-	password: zod.string()
+	firstName: zod.string().min(1).max(50),
+	lastName: zod.string().min(1).max(50),
+	password: zod.string().min(6)
 })
 
-router.post("/signup", async (req, res) => {
+router.post("/signup", asyncHandler(async (req, res) => {
     const { success } = signupBody.safeParse(req.body)
     if (!success) {
         return res.status(411).json({
@@ -43,7 +43,7 @@ router.post("/signup", async (req, res) => {
 
     await Account.create({
         userId,
-        balance: 1 + Math.random() * 10000
+        balance: Math.round((1 + Math.random() * 10000) * 100) / 100
     })
 
     const token = jwt.sign({
@@ -54,7 +54,7 @@ router.post("/signup", async (req, res) => {
         message: "User created successfully",
         token: token
     })
-})
+}))
 
 
 const signinBody = zod.object({
@@ -62,11 +62,11 @@ const signinBody = zod.object({
 	password: zod.string()
 })
 
-router.post("/signin", async (req, res) => {
+router.post("/signin", asyncHandler(async (req, res) => {
     const { success } = signinBody.safeParse(req.body)
     if (!success) {
         return res.status(411).json({
-            message: "Email already taken / Incorrect inputs"
+            message: "Incorrect inputs"
         })
     }
 
@@ -90,33 +90,31 @@ router.post("/signin", async (req, res) => {
     res.status(411).json({
         message: "Error while logging in"
     })
-})
+}))
 
 const updateBody = zod.object({
-	password: zod.string().optional(),
-    firstName: zod.string().optional(),
-    lastName: zod.string().optional(),
+	password: zod.string().min(6).optional(),
+    firstName: zod.string().min(1).max(50).optional(),
+    lastName: zod.string().min(1).max(50).optional(),
 })
 
-router.put("/", authMiddleware, async (req, res) => {
+router.put("/", authMiddleware, asyncHandler(async (req, res) => {
     const { success } = updateBody.safeParse(req.body)
     if (!success) {
-        res.status(411).json({
+        return res.status(411).json({
             message: "Error while updating information"
         })
     }
 
-    await User.updateOne(req.body, {
-        id: req.userId
-    })
+    await User.updateOne({ _id: req.userId }, req.body)
 
     res.json({
         message: "Updated successfully"
     })
-})
+}))
 
-router.get("/bulk", async (req, res) => {
-    const filter = req.query.filter || "";
+router.get("/bulk", asyncHandler(async (req, res) => {
+    const filter = String(req.query.filter || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     const users = await User.find({
         $or: [{
@@ -138,6 +136,6 @@ router.get("/bulk", async (req, res) => {
             _id: user._id
         }))
     })
-})
+}))
 
 module.exports = router;

@@ -1,4 +1,4 @@
-// backend/user/index.js
+// backend/routes/index.js
 const express = require('express');
 const userRouter = require("./user");
 const accountRouter = require("./account");

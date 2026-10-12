@@ -21,6 +21,12 @@ const authMiddleware = (req, res, next) => {
     }
 };
 
+// Express 4 does not catch rejected promises from async handlers
+const asyncHandler = (fn) => (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+};
+
 module.exports = {
-    authMiddleware
+    authMiddleware,
+    asyncHandler
 }

@@ -1,7 +1,8 @@
 // backend/db.js
 const mongoose = require('mongoose');
 
-mongoose.connect("mongodb://localhost:27017/paytm")
+mongoose.connect(process.env.MONGO_URL || "mongodb://localhost:27017/paytm")
+    .catch((err) => console.error("MongoDB connection error:", err.message));
 
 // Create a Schema for Users
 const userSchema = new mongoose.Schema({
